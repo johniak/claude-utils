@@ -8,6 +8,7 @@ Each tool lives in its own directory with a self-contained `install.sh` / `unins
 | Tool | What it does |
 |------|--------------|
 | [**statusline**](statusline/) | Compact statusline showing model, context window usage, and account rate limits (weekly/session) with a pace marker that tells you if you're burning quota faster than the clock. |
+| [**review**](review/) | A `/review` skill that reviews a GitHub PR like a critical senior engineer — problem-only, severity-sorted, verified against the real codebase. |
 
 ## Usage
 
