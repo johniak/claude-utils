@@ -1,3 +1,7 @@
 *.bak
 *.bak.*
 .DS_Store
+node_modules/
+dist/
+*.log
+claude-status/claude-status-queue.jsonl

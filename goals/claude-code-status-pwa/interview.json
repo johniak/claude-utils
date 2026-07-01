@@ -1,0 +1,195 @@
+{
+  "stage": "interview",
+  "title": "Claude Code Status PWA",
+  "goalSlug": "claude-code-status-pwa",
+  "questions": [
+    {
+      "id": "network_scope",
+      "prompt": "Gdzie dashboard ma być dostępny?",
+      "description": "To wpływa na bezpieczeństwo, discovery instancji i sposób połączenia telefon-backend.",
+      "answerMode": "single-custom",
+      "recommendedAnswer": "Tylko w lokalnej sieci na start; zdalny dostęp później przez VPN albo tunel.",
+      "recommendedOptionIds": ["lan_only"],
+      "options": [
+        {
+          "id": "lan_only",
+          "label": "Tylko LAN"
+        },
+        {
+          "id": "vpn_tunnel_later",
+          "label": "LAN teraz, zdalnie później"
+        },
+        {
+          "id": "remote_now",
+          "label": "Zdalnie od razu"
+        }
+      ],
+      "required": true
+    },
+    {
+      "id": "session_integration",
+      "prompt": "Jak akceptowalne jest podpinanie monitoringu pod sesje Claude Code?",
+      "description": "Najbardziej niezawodne MVP wymaga wrappera lub małego launchera, ale można rozważyć tryb obserwowania istniejących sesji.",
+      "answerMode": "single-custom",
+      "recommendedAnswer": "Wrapper/launcher dla nowych sesji, np. komenda uruchamiająca Claude Code i raportująca status.",
+      "recommendedOptionIds": ["wrapper"],
+      "options": [
+        {
+          "id": "wrapper",
+          "label": "Wrapper/launcher OK"
+        },
+        {
+          "id": "observe_existing",
+          "label": "Monitoruj istniejące sesje"
+        },
+        {
+          "id": "both",
+          "label": "Oba tryby"
+        }
+      ],
+      "required": true
+    },
+    {
+      "id": "status_detection",
+      "prompt": "Co ma oznaczać, że Claude Code czeka na akcję albo skończył etap?",
+      "description": "Tu wybieramy źródło prawdy dla statusu kafelka.",
+      "answerMode": "multi-custom",
+      "recommendedAnswer": "Na start analizować strumień wyjścia/log sesji i wykrywać znane komunikaty, a później dodać hooki lub bardziej precyzyjne adaptery, jeśli będą dostępne.",
+      "recommendedOptionIds": ["output_log", "manual_override"],
+      "options": [
+        {
+          "id": "output_log",
+          "label": "Analiza outputu/logu"
+        },
+        {
+          "id": "hooks",
+          "label": "Hooki Claude Code"
+        },
+        {
+          "id": "terminal_prompt",
+          "label": "Wykrycie promptu terminala"
+        },
+        {
+          "id": "manual_override",
+          "label": "Ręczne nadpisanie statusu"
+        }
+      ],
+      "required": true
+    },
+    {
+      "id": "dashboard_actions",
+      "prompt": "Czy PWA ma tylko pokazywać statusy, czy też pozwalać działać na sesjach?",
+      "description": "Sterowanie sesjami z telefonu mocno podnosi zakres i wymagania bezpieczeństwa.",
+      "answerMode": "single-custom",
+      "recommendedAnswer": "MVP tylko pokazuje statusy i ostatnie wiadomości; akcje na sesjach zostawić na późniejszy etap.",
+      "recommendedOptionIds": ["read_only"],
+      "options": [
+        {
+          "id": "read_only",
+          "label": "Tylko podgląd"
+        },
+        {
+          "id": "acknowledge",
+          "label": "Podgląd + oznacz jako obsłużone"
+        },
+        {
+          "id": "control_sessions",
+          "label": "Pełne sterowanie sesją"
+        }
+      ],
+      "required": true
+    },
+    {
+      "id": "hosts",
+      "prompt": "Na jakich systemach będą działać komputery z instancjami?",
+      "description": "To decyduje o agencie, packagingu i sposobie uruchamiania procesów.",
+      "answerMode": "multi-custom",
+      "recommendedAnswer": "macOS i Linux/WSL jako pierwsze platformy; Windows natywny poza MVP, jeśli nie jest potrzebny.",
+      "recommendedOptionIds": ["macos", "linux_wsl"],
+      "options": [
+        {
+          "id": "macos",
+          "label": "macOS"
+        },
+        {
+          "id": "linux_wsl",
+          "label": "Linux/WSL"
+        },
+        {
+          "id": "windows_native",
+          "label": "Windows natywny"
+        }
+      ],
+      "required": true
+    },
+    {
+      "id": "realtime_and_history",
+      "prompt": "Jak świeże i trwałe mają być dane?",
+      "description": "Real-time i historia wpływają na backend, bazę danych i PWA.",
+      "answerMode": "single-custom",
+      "recommendedAnswer": "Statusy real-time przez WebSocket/SSE oraz krótka historia ostatnich zdarzeń i zakończonych sesji.",
+      "recommendedOptionIds": ["realtime_short_history"],
+      "options": [
+        {
+          "id": "realtime_short_history",
+          "label": "Real-time + krótka historia"
+        },
+        {
+          "id": "polling_memory_only",
+          "label": "Polling, tylko pamięć"
+        },
+        {
+          "id": "full_history",
+          "label": "Pełna historia"
+        }
+      ],
+      "required": true
+    },
+    {
+      "id": "notifications",
+      "prompt": "Czy telefon ma dostawać powiadomienia, gdy sesja czeka na Ciebie?",
+      "description": "Web push w PWA jest możliwy, ale lepiej zaplanować go świadomie, bo komplikuje konfigurację.",
+      "answerMode": "single-custom",
+      "recommendedAnswer": "Powiadomienia jako etap drugi; MVP powinno dobrze działać bez nich.",
+      "recommendedOptionIds": ["later"],
+      "options": [
+        {
+          "id": "later",
+          "label": "Później"
+        },
+        {
+          "id": "mvp",
+          "label": "W MVP"
+        },
+        {
+          "id": "none",
+          "label": "Niepotrzebne"
+        }
+      ],
+      "required": true
+    },
+    {
+      "id": "auth",
+      "prompt": "Jaki poziom zabezpieczeń wystarczy na start?",
+      "description": "Nawet w LAN warto mieć minimalną autoryzację, szczególnie jeśli później dojdą akcje na sesjach.",
+      "answerMode": "single-custom",
+      "recommendedAnswer": "Prosty token/hasło dla dashboardu i agentów; pełne konta użytkowników poza zakresem MVP.",
+      "recommendedOptionIds": ["token"],
+      "options": [
+        {
+          "id": "token",
+          "label": "Token/hasło"
+        },
+        {
+          "id": "no_auth_lan",
+          "label": "Bez auth w LAN"
+        },
+        {
+          "id": "full_login",
+          "label": "Pełne logowanie"
+        }
+      ],
+      "required": true
+    }
+  ]
+}

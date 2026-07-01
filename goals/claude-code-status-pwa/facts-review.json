@@ -1,0 +1,119 @@
+{
+  "stage": "facts",
+  "title": "Claude Code Status PWA",
+  "goalSlug": "claude-code-status-pwa",
+  "facts": [
+    {
+      "id": "fact-1",
+      "text": "Aplikacja jest webowa i instalowalna jako PWA na telefonie.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-2",
+      "text": "Dashboard działa w lokalnej sieci LAN i nie wymaga dostępu spoza sieci w MVP.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": false,
+      "automatedVerification": false
+    },
+    {
+      "id": "fact-3",
+      "text": "Dashboard pokazuje wiele instancji Claude Code uruchomionych na różnych komputerach w tej samej sieci lokalnej.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-4",
+      "text": "Każda instancja jest prezentowana jako kafelek z tytułem/nazwą sesji, hostem, aktualnym statusem, czasem ostatniej zmiany i ostatnią ważną wiadomością.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-5",
+      "text": "MVP monitoruje istniejące sesje Claude Code bez wymagania uruchamiania ich przez osobny wrapper.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": false,
+      "automatedVerification": false
+    },
+    {
+      "id": "fact-6",
+      "text": "Status sesji jest raportowany przez lokalnego agenta na każdym komputerze, który integruje się z hookami Claude Code tam, gdzie to możliwe.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-7",
+      "text": "System potrafi pokazać, że sesja działa, czeka na akcję użytkownika, zakończyła etap albo zakończyła całość.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-8",
+      "text": "System przechowuje i pokazuje końcową wiadomość lub ostatnią istotną wiadomość sesji, żeby było widać, co Claude Code zrobił albo czego potrzebuje dalej.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-9",
+      "text": "PWA jest tylko do podglądu w MVP i nie pozwala wysyłać komend ani odpowiedzi do sesji Claude Code.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-10",
+      "text": "Pierwszymi wspieranymi systemami hostów są macOS oraz Linux/WSL.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": false,
+      "automatedVerification": false
+    },
+    {
+      "id": "fact-11",
+      "text": "Dashboard dostaje aktualizacje statusu w czasie rzeczywistym przez WebSocket albo SSE, bez natywnych powiadomień push w MVP.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-12",
+      "text": "System zachowuje krótką historię ostatnich zdarzeń i zakończonych sesji.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-13",
+      "text": "MVP nie wymaga logowania ani autoryzacji, bo działa wyłącznie w zaufanej sieci lokalnej.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": false,
+      "automatedVerification": false
+    },
+    {
+      "id": "fact-14",
+      "text": "UI jest zoptymalizowany pod telefon: kafelki są czytelne na małym ekranie, a status wymagający uwagi jest widoczny od razu.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    }
+  ]
+}

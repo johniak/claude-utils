@@ -1,0 +1,4 @@
+#!/usr/bin/env node
+import { createReporterFromStdin } from "../agent/hook-reporter.js";
+
+createReporterFromStdin();
