@@ -43,7 +43,7 @@ describe("reduceEvents", () => {
     expect(card!.latestImportantMessage).toBe("test message");
   });
 
-  it("transitions active -> turn_complete on final event", () => {
+  it("transitions active -> idle on final event", () => {
     const events: SessionEvent[] = [
       makeEvent({ payload: { message: "working on it" } }),
       makeEvent({
@@ -53,7 +53,7 @@ describe("reduceEvents", () => {
     ];
     const cards = reduceEvents(events);
     const card = cards.get("session-1");
-    expect(card!.status).toBe("turn_complete");
+    expect(card!.status).toBe("idle");
     expect(card!.latestImportantMessage).toBe("done with this phase");
   });
 
@@ -77,6 +77,99 @@ describe("reduceEvents", () => {
     const cards = reduceEvents(events);
     const card = cards.get("session-1");
     expect(card!.status).toBe("waiting");
+  });
+
+  it("uses hook payload status for Claude Code lifecycle events", () => {
+    const events = [
+      makeEvent({
+        payload: {
+          status: "idle",
+          message: "Turn complete",
+          hookEventName: "Stop",
+        },
+      }),
+    ];
+    const cards = reduceEvents(events);
+    const card = cards.get("session-1");
+    expect(card!.status).toBe("idle");
+  });
+
+  it("maps legacy completed hook status to idle", () => {
+    const events = [
+      makeEvent({
+        payload: {
+          status: "completed",
+          message: "Session ended",
+          hookEventName: "SessionEnd",
+        },
+      }),
+    ];
+    const cards = reduceEvents(events);
+    const card = cards.get("session-1");
+    expect(card!.status).toBe("idle");
+  });
+
+  it("keeps assistant messages active instead of marking them done", () => {
+    const events = [
+      makeEvent({
+        type: "message",
+        payload: {
+          message: "Still working",
+        },
+      }),
+    ];
+    const cards = reduceEvents(events);
+    const card = cards.get("session-1");
+    expect(card!.status).toBe("active");
+  });
+
+  it("ignores discovery-only sessions", () => {
+    const events = [
+      makeEvent({
+        type: "discovery",
+        payload: {
+          projectPath: "/Users/test/project",
+          message: "",
+        },
+      }),
+    ];
+    const cards = reduceEvents(events);
+    expect(cards.size).toBe(0);
+  });
+
+  it("keeps heartbeat from overriding an existing status", () => {
+    const events = [
+      makeEvent({
+        sessionId: "session-1",
+        payload: {
+          status: "waiting",
+          message: "Approve command",
+        },
+      }),
+      makeEvent({
+        sessionId: "session-1",
+        type: "heartbeat",
+        timestamp: Date.now() + 1,
+        payload: {
+          message: "",
+        },
+      }),
+    ];
+    const cards = reduceEvents(events);
+    const card = cards.get("session-1");
+    expect(card!.status).toBe("waiting");
+  });
+
+  it("falls back to hostId when hook payload has no host name", () => {
+    const events = [
+      makeEvent({
+        hostId: "macbook.local",
+        payload: { hostName: "", message: "hello" },
+      }),
+    ];
+    const cards = reduceEvents(events);
+    const card = cards.get("session-1");
+    expect(card!.hostName).toBe("macbook.local");
   });
 
   it("marks session stale after heartbeat timeout", () => {

@@ -1,5 +1,7 @@
 import { SessionEvent, SessionCardState, SessionStatus, SessionId, STALE_AFTER_MS } from "./types.js";
 
+const VALID_STATUSES: SessionStatus[] = ["active", "waiting", "idle", "error", "stale"];
+
 export function reduceEvents(
   events: SessionEvent[]
 ): Map<SessionId, SessionCardState> {
@@ -7,6 +9,10 @@ export function reduceEvents(
 
   for (const event of events) {
     const existing = cards.get(event.sessionId);
+
+    if ((event.type === "discovery" || event.type === "heartbeat") && !existing) {
+      continue;
+    }
 
     if (event.type === "stale_check") {
       if (existing) {
@@ -26,9 +32,16 @@ export function reduceEvents(
     const str = (v: unknown) => (typeof v === "string" ? v : "");
     const bool = (v: unknown) => v === true;
 
-    const hostName = str(event.payload.hostName) ?? "";
-    const os = str(event.payload.os) ?? "";
-    const projectPath = str(event.payload.projectPath) ?? "";
+    const hostName =
+      str(event.payload.hostName) ||
+      existing?.hostName ||
+      event.hostId ||
+      "unknown";
+    const os = str(event.payload.os) || existing?.os || "";
+    const projectPath =
+      str(event.payload.projectPath) ||
+      existing?.projectPath ||
+      "";
     const title =
       str(event.payload.title) ||
       str(event.payload.sessionTitle) ||
@@ -42,27 +55,28 @@ export function reduceEvents(
 
     let newStatus: SessionStatus = existing?.status ?? "active";
 
-    if (event.type === "hook" || event.type === "test") {
-      const hookStatus = str(event.payload.status);
-      if (hookStatus === "completed" || bool(event.payload.final)) {
-        newStatus = "turn_complete";
-      } else if (hookStatus === "error" || bool(event.payload.error)) {
+    const payloadStatus = normalizeStatus(str(event.payload.status));
+
+    if (payloadStatus) {
+      newStatus = payloadStatus;
+    } else if (event.type === "hook" || event.type === "test") {
+      if (bool(event.payload.final) || bool(event.payload.turnComplete)) {
+        newStatus = "idle";
+      } else if (bool(event.payload.error)) {
         newStatus = "error";
-      } else if (hookStatus === "waiting" || bool(event.payload.waiting)) {
+      } else if (bool(event.payload.waiting)) {
         newStatus = "waiting";
-      } else if (bool(event.payload.turnComplete)) {
-        newStatus = "turn_complete";
-      } else if (event.payload.assistantMessage || event.payload.message) {
-        newStatus = "active";
       } else {
         newStatus = "active";
       }
     } else if (event.type === "discovery") {
-      newStatus = "active";
+      newStatus = existing?.status ?? "idle";
     } else if (event.type === "heartbeat") {
-      newStatus = existing?.status === "stale" ? "active" : existing?.status ?? "active";
-    } else if (event.type === "message" || event.type === "turn_complete") {
-      newStatus = "turn_complete";
+      newStatus = existing?.status === "stale" ? "idle" : existing?.status ?? "idle";
+    } else if (event.type === "message") {
+      newStatus = "active";
+    } else if (event.type === "turn_complete") {
+      newStatus = "idle";
     } else if (event.type === "error") {
       newStatus = "error";
     }
@@ -116,9 +130,8 @@ export function getAttendedSessions(
     error: 0,
     waiting: 1,
     stale: 2,
-    turn_complete: 3,
-    active: 4,
-    completed: 5,
+    active: 3,
+    idle: 4,
   };
 
   result.sort((a, b) => {
@@ -129,6 +142,29 @@ export function getAttendedSessions(
   });
 
   return result;
+}
+
+function normalizeStatus(value: string): SessionStatus | "" {
+  if ((VALID_STATUSES as string[]).includes(value)) {
+    return value as SessionStatus;
+  }
+
+  switch (value) {
+    case "running":
+    case "working":
+      return "active";
+    case "blocked":
+    case "needs_input":
+      return "waiting";
+    case "done":
+    case "turn_complete":
+    case "completed":
+      return "idle";
+    case "failed":
+      return "error";
+    default:
+      return "";
+  }
 }
 
 export function filterByStatus(

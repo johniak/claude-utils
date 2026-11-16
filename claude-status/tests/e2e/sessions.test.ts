@@ -108,7 +108,7 @@ describe("E2E: Session Monitoring Flow", () => {
     expect(historyRes2.body.events[1].type).toBe("error");
   });
 
-  it("handles turn_complete and stale transitions", async () => {
+  it("handles idle and stale transitions", async () => {
     const now = Date.now();
 
     // Active session
@@ -122,7 +122,7 @@ describe("E2E: Session Monitoring Flow", () => {
         payload: { hostName: "mac", message: "working" },
       });
 
-    // Turn complete
+    // Turn complete / idle
     await request(app)
       .post("/api/events")
       .send({
@@ -135,7 +135,7 @@ describe("E2E: Session Monitoring Flow", () => {
 
     const cards = store.getCards();
     const session = cards.get("session-1");
-    expect(session!.status).toBe("turn_complete");
+    expect(session!.status).toBe("idle");
     expect(session!.latestImportantMessage).toBe("Done with this phase");
 
     // Simulate stale - use Date.now() minus STALE_AFTER_MS+

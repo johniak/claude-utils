@@ -6,8 +6,7 @@ export type SessionTitle = string;
 export type SessionStatus =
   | "active"
   | "waiting"
-  | "turn_complete"
-  | "completed"
+  | "idle"
   | "error"
   | "stale";
 

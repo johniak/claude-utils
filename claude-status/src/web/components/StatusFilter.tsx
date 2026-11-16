@@ -1,11 +1,11 @@
 import { SessionStatus } from "../../shared/types.js";
 
-const FILTERS: { value: SessionStatus; label: string }[] = [
-  { value: "active", label: "Active" },
-  { value: "waiting", label: "Waiting" },
-  { value: "error", label: "Errors" },
-  { value: "stale", label: "Stale" },
-  { value: "turn_complete", label: "Done" },
+const FILTERS: { value: SessionStatus; values?: SessionStatus[]; label: string }[] = [
+  { value: "active", values: ["active"], label: "Running" },
+  { value: "waiting", values: ["waiting"], label: "Needs Input" },
+  { value: "error", values: ["error"], label: "Errors" },
+  { value: "stale", values: ["stale"], label: "Stale" },
+  { value: "idle", values: ["idle"], label: "Idle" },
 ];
 
 interface Props {
@@ -16,10 +16,13 @@ interface Props {
 
 export default function StatusFilter({ filter, onFilterChange, counts }: Props) {
   const toggle = (status: SessionStatus) => {
-    if (filter.includes(status)) {
-      onFilterChange(filter.filter((s) => s !== status));
+    const statuses = FILTERS.find((f) => f.value === status)?.values ?? [status];
+    const isActive = statuses.every((s) => filter.includes(s));
+
+    if (isActive) {
+      onFilterChange(filter.filter((s) => !statuses.includes(s)));
     } else {
-      onFilterChange([...filter, status]);
+      onFilterChange(Array.from(new Set([...filter, ...statuses])));
     }
   };
 
@@ -36,7 +39,7 @@ export default function StatusFilter({ filter, onFilterChange, counts }: Props) 
       {FILTERS.map((f) => (
         <button
           key={f.value}
-          className={`filter-btn ${filter.includes(f.value) ? "active" : ""}`}
+          className={`filter-btn ${(f.values ?? [f.value]).every((s) => filter.includes(s)) ? "active" : ""}`}
           onClick={() => toggle(f.value)}
         >
           {f.label} ({counts[f.value] || 0})

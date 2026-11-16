@@ -56,33 +56,37 @@ echo "✓ Backed up $SETTINGS"
 
 # 6. Install hook idempotently
 tmp="$(mktemp)"
-jq --arg url "$SERVER_URL" --arg hook "$HOOK_SCRIPT_DST" \
-  '.hooks = ((.hooks // {}) + {
-    "PostToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": $hook,
-            "env": { "CLAUDE_STATUS_SERVER_URL": $url }
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": $hook,
-            "env": { "CLAUDE_STATUS_SERVER_URL": $url }
-          }
-        ]
-      }
-    ]
-  })' \
+jq --arg url "$SERVER_URL" --arg hook "$HOOK_SCRIPT_DST" '
+  def status_handler:
+    {
+      "type": "command",
+      "command": $hook,
+      "env": { "CLAUDE_STATUS_SERVER_URL": $url }
+    };
+
+  def status_group($matcher):
+    if $matcher == "" then
+      { "hooks": [status_handler] }
+    else
+      { "matcher": $matcher, "hooks": [status_handler] }
+    end;
+
+  def without_status_hook:
+    map(select(((.hooks // []) | any(.command == $hook)) | not));
+
+  .hooks = (.hooks // {})
+  | .hooks.SessionStart = (((.hooks.SessionStart // []) | without_status_hook) + [status_group("*")])
+  | .hooks.UserPromptSubmit = (((.hooks.UserPromptSubmit // []) | without_status_hook) + [status_group("")])
+  | .hooks.MessageDisplay = (((.hooks.MessageDisplay // []) | without_status_hook) + [status_group("")])
+  | .hooks.Notification = (((.hooks.Notification // []) | without_status_hook) + [status_group("*")])
+  | .hooks.PermissionRequest = (((.hooks.PermissionRequest // []) | without_status_hook) + [status_group("*")])
+  | .hooks.PreToolUse = (((.hooks.PreToolUse // []) | without_status_hook) + [status_group("*")])
+  | .hooks.PostToolUse = (((.hooks.PostToolUse // []) | without_status_hook) + [status_group("*")])
+  | .hooks.PostToolUseFailure = (((.hooks.PostToolUseFailure // []) | without_status_hook) + [status_group("*")])
+  | .hooks.Stop = (((.hooks.Stop // []) | without_status_hook) + [status_group("")])
+  | .hooks.StopFailure = (((.hooks.StopFailure // []) | without_status_hook) + [status_group("*")])
+  | .hooks.SessionEnd = (((.hooks.SessionEnd // []) | without_status_hook) + [status_group("*")])
+' \
   "$SETTINGS" > "$tmp" && mv "$tmp" "$SETTINGS"
 
 echo "✓ Hook entries added to settings.json"

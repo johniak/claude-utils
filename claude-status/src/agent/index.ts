@@ -2,6 +2,8 @@ import { AgentConfig } from "../shared/types.js";
 import fs from "fs";
 import path from "path";
 import { HookReporter } from "./hook-reporter.js";
+import os from "os";
+import { pathToFileURL } from "url";
 
 const CLAUDE_TRANSCRIPT_DIR = ".claude/CLAUDE.md";
 const CLAUDE_STATE_DIR = ".claude/sessions";
@@ -138,9 +140,12 @@ export function loadAgentConfig(): AgentConfig {
   return {
     serverUrl:
       process.env.CLAUDE_STATUS_SERVER_URL || "http://127.0.0.1:4000",
-    hostName: process.env.HOSTNAME || "unknown",
+    hostName: process.env.HOSTNAME || os.hostname() || "unknown",
     os: process.env.OS || process.platform,
-    projectPath: process.env.CLAUDE_PROJECT_PATH || process.cwd(),
+    projectPath:
+      process.env.CLAUDE_PROJECT_PATH ||
+      process.env.CLAUDE_PROJECT_DIR ||
+      process.cwd(),
     heartbeatIntervalMs: parseInt(
       process.env.HEARTBEAT_INTERVAL_MS || "15000",
       10
@@ -149,4 +154,19 @@ export function loadAgentConfig(): AgentConfig {
       process.env.CLAUDE_STATUS_QUEUE_PATH ||
       path.join(process.env.HOME || ".", ".claude", "claude-status", "queue.jsonl"),
   };
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const agent = createAgent(loadAgentConfig());
+  agent.start().catch((err) => {
+    console.error("[claude-status agent] Failed to start:", err);
+    process.exit(1);
+  });
+
+  for (const signal of ["SIGINT", "SIGTERM"] as const) {
+    process.on(signal, () => {
+      agent.stop();
+      process.exit(0);
+    });
+  }
 }

@@ -1,6 +1,7 @@
 import { AgentConfig } from "../shared/types.js";
 import { normalizeHookEvent } from "./normalize-hook-event.js";
-import { EventEmitter } from "events";
+import os from "os";
+import path from "path";
 
 const QUEUE_FILE = "claude-status-queue.jsonl";
 
@@ -69,7 +70,7 @@ export class HookReporter {
   async saveQueue(): Promise<void> {
     try {
       const fs = await import("fs");
-      const dir = require("path").dirname(this.queuePath);
+      const dir = path.dirname(this.queuePath);
       fs.mkdirSync(dir, { recursive: true });
       fs.writeFileSync(
         this.queuePath,
@@ -108,17 +109,35 @@ export class HookReporter {
 export function createReporterFromStdin(): void {
   const config: AgentConfig = {
     serverUrl: process.env.CLAUDE_STATUS_SERVER_URL || "http://127.0.0.1:4000",
-    hostName: process.env.HOSTNAME || "unknown",
-    os: process.env.OS || "darwin",
-    projectPath: process.env.CLAUDE_PROJECT_PATH || "",
+    hostName: process.env.HOSTNAME || os.hostname() || "unknown",
+    os: process.env.OS || process.platform,
+    projectPath:
+      process.env.CLAUDE_PROJECT_PATH ||
+      process.env.CLAUDE_PROJECT_DIR ||
+      process.env.PWD ||
+      "",
     heartbeatIntervalMs: 15000,
-    queuePath: process.env.CLAUDE_STATUS_QUEUE_PATH || QUEUE_FILE,
+    queuePath:
+      process.env.CLAUDE_STATUS_QUEUE_PATH ||
+      path.join(process.env.HOME || ".", ".claude", "claude-status", "queue.jsonl"),
   };
 
   const reporter = new HookReporter(config);
 
   process.stdin.setEncoding("utf-8");
   let buffer = "";
+  const pending: Promise<void>[] = [];
+
+  const processInput = (input: string): void => {
+    const trimmed = input.trim();
+    if (!trimmed) return;
+    try {
+      const payload = JSON.parse(trimmed);
+      pending.push(reporter.sendEvent(payload));
+    } catch {
+      // silently skip malformed JSON
+    }
+  };
 
   process.stdin.on("data", (chunk: string) => {
     buffer += chunk;
@@ -126,17 +145,18 @@ export function createReporterFromStdin(): void {
     buffer = lines.pop() || "";
 
     for (const line of lines) {
-      if (!line.trim()) continue;
-      try {
-        const payload = JSON.parse(line);
-        reporter.sendEvent(payload);
-      } catch {
-        // silently skip malformed JSON
-      }
+      processInput(line);
     }
   });
 
+  process.stdin.on("end", async () => {
+    processInput(buffer);
+    await Promise.allSettled(pending);
+    await reporter.saveQueue();
+  });
+
   process.on("SIGTERM", async () => {
+    await Promise.allSettled(pending);
     await reporter.saveQueue();
     process.exit(0);
   });

@@ -28,7 +28,7 @@ export class WebSocketBroadcaster {
     });
 
     store.onEvent(() => {
-      this.broadcast("");
+      this.broadcastSnapshot();
     });
   }
 

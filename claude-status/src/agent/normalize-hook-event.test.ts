@@ -18,7 +18,7 @@ describe("normalizeHookEvent", () => {
 
     expect(result).toBeDefined();
     expect(result.hostId).toBe("test-host");
-    expect(result.sessionId).toMatch(/^auto-test-host-/);
+    expect(result.sessionId).toBe("project:/tmp/test-project");
     expect(result.type).toBe("test_hook");
     expect(result.payload.hostName).toBe("test-host");
     expect(result.payload.message).toBe("hello world");
@@ -107,5 +107,58 @@ describe("normalizeHookEvent", () => {
     const raw = { type: "custom_type", message: "test" };
     const result = normalizeHookEvent(raw, baseConfig) as IngestRequest;
     expect(result.type).toBe("custom_type");
+  });
+
+  it("normalizes Claude Code hook input fields", () => {
+    const result = normalizeHookEvent(
+      {
+        session_id: "claude-session-1",
+        transcript_path: "/tmp/transcript.jsonl",
+        cwd: "/Users/test/my-project",
+        hook_event_name: "PostToolUse",
+        tool_name: "Bash",
+      },
+      baseConfig
+    ) as IngestRequest;
+
+    expect(result.sessionId).toBe("claude-session-1");
+    expect(result.type).toBe("hook");
+    expect(result.payload.projectPath).toBe("/Users/test/my-project");
+    expect(result.payload.title).toBe("my-project");
+    expect(result.payload.status).toBe("active");
+    expect(result.payload.hookEventName).toBe("PostToolUse");
+    expect(result.payload.toolName).toBe("Bash");
+    expect(result.payload.message).toBe("Bash completed");
+  });
+
+  it("marks Claude Code Stop hooks as idle", () => {
+    const result = normalizeHookEvent(
+      {
+        session_id: "claude-session-1",
+        cwd: "/tmp/project",
+        hook_event_name: "Stop",
+        last_assistant_message: "Finished the task",
+      },
+      baseConfig
+    ) as IngestRequest;
+
+    expect(result.type).toBe("hook");
+    expect(result.payload.status).toBe("idle");
+    expect(result.payload.message).toBe("Finished the task");
+  });
+
+  it("uses stable session ids for synthetic heartbeat events", () => {
+    const result = normalizeHookEvent(
+      {
+        type: "heartbeat",
+        sessionFile: "/Users/test/my-project/CLAUDE.md",
+        projectPath: "/Users/test/my-project",
+      },
+      baseConfig
+    ) as IngestRequest;
+
+    expect(result.sessionId).toBe("/Users/test/my-project/CLAUDE.md");
+    expect(result.type).toBe("heartbeat");
+    expect(result.payload.status).toBe("idle");
   });
 });

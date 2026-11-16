@@ -26,7 +26,27 @@ if [ -f "$SETTINGS" ]; then
   echo "✓ Backed up $SETTINGS"
 
   tmp="$(mktemp)"
-  jq 'del(.hooks.PostToolUse, .hooks.Stop)' \
+  jq --arg hook "$HOOK_DIR/bin/claude-status-hook" '
+    def without_status_hook:
+      map(select(((.hooks // []) | any(.command == $hook)) | not));
+
+    if .hooks then
+      .hooks.SessionStart = ((.hooks.SessionStart // []) | without_status_hook)
+      | .hooks.UserPromptSubmit = ((.hooks.UserPromptSubmit // []) | without_status_hook)
+      | .hooks.MessageDisplay = ((.hooks.MessageDisplay // []) | without_status_hook)
+      | .hooks.Notification = ((.hooks.Notification // []) | without_status_hook)
+      | .hooks.PermissionRequest = ((.hooks.PermissionRequest // []) | without_status_hook)
+      | .hooks.PreToolUse = ((.hooks.PreToolUse // []) | without_status_hook)
+      | .hooks.PostToolUse = ((.hooks.PostToolUse // []) | without_status_hook)
+      | .hooks.PostToolUseFailure = ((.hooks.PostToolUseFailure // []) | without_status_hook)
+      | .hooks.Stop = ((.hooks.Stop // []) | without_status_hook)
+      | .hooks.StopFailure = ((.hooks.StopFailure // []) | without_status_hook)
+      | .hooks.SessionEnd = ((.hooks.SessionEnd // []) | without_status_hook)
+      | .hooks |= with_entries(select(.value != []))
+    else
+      .
+    end
+  ' \
     "$SETTINGS" > "$tmp" && mv "$tmp" "$SETTINGS"
   echo "✓ Hook entries removed from settings.json"
 else

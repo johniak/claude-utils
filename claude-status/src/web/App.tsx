@@ -80,7 +80,7 @@ export default function App() {
           waiting: sessions.filter((s) => s.status === "waiting").length,
           error: sessions.filter((s) => s.status === "error").length,
           stale: sessions.filter((s) => s.status === "stale").length,
-          turn_complete: sessions.filter((s) => s.status === "turn_complete").length,
+          idle: sessions.filter((s) => s.status === "idle").length,
         }}
       />
 

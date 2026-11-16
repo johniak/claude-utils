@@ -99,24 +99,15 @@ export async function startServer(
 function startStaleChecker(config: ServerConfig): void {
   setInterval(() => {
     const now = Date.now();
-    const allEvents = store.getAll();
+    const cards = store.getCards();
 
-    // Find sessions that haven't been updated
-    const sessionLastUpdate = new Map<string, number>();
-    for (const event of allEvents) {
-      const current = sessionLastUpdate.get(event.sessionId) ?? 0;
-      if (event.timestamp > current) {
-        sessionLastUpdate.set(event.sessionId, event.timestamp);
-      }
-    }
-
-    for (const [sessionId, lastUpdate] of sessionLastUpdate) {
-      if (now - lastUpdate > config.staleAfterMs) {
+    for (const card of cards.values()) {
+      if (card.status !== "stale" && now - card.lastUpdate > config.staleAfterMs) {
         store.ingest({
-          id: `stale-${sessionId}`,
+          id: `stale-${card.sessionId}-${now}`,
           type: "stale_check",
           hostId: "system",
-          sessionId,
+          sessionId: card.sessionId,
           timestamp: now,
           payload: { checkTime: now },
         });

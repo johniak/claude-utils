@@ -3,17 +3,15 @@ import { SessionCardState } from "../../shared/types.js";
 const statusColors: Record<SessionCardState["status"], string> = {
   active: "#22c55e",
   waiting: "#f59e0b",
-  turn_complete: "#8b5cf6",
-  completed: "#6366f1",
+  idle: "#60a5fa",
   error: "#ef4444",
   stale: "#6b7280",
 };
 
 const statusLabels: Record<SessionCardState["status"], string> = {
-  active: "Active",
-  waiting: "Waiting",
-  turn_complete: "Turn Done",
-  completed: "Completed",
+  active: "Running",
+  waiting: "Needs Input",
+  idle: "Idle",
   error: "Error",
   stale: "Stale",
 };
@@ -21,8 +19,7 @@ const statusLabels: Record<SessionCardState["status"], string> = {
 const statusIcons: Record<SessionCardState["status"], string> = {
   active: "▶",
   waiting: "⏳",
-  turn_complete: "✓",
-  completed: "🏁",
+  idle: "✓",
   error: "✗",
   stale: "⏸",
 };
