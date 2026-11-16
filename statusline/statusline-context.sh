@@ -19,17 +19,20 @@ SW=10                                # session bar width
 DUR_WEEK=604800                      # 7d in seconds
 DUR_SESSION=18000                    # 5h in seconds
 
-# ── pull values from stdin (IFS=tab keeps empty fields aligned) ────────────
+# ── pull values from stdin ─────────────────────────────────────────────────
+# Fields are joined with \x1f (unit separator), NOT tab: tab is IFS whitespace,
+# so bash collapses consecutive tabs and an empty field (e.g. no five_hour
+# reset) would shift every later field left.
 if command -v jq >/dev/null 2>&1; then
-  IFS=$'\t' read -r ctx_pct wk_raw wk_reset se_raw se_reset model_name effort < <(printf '%s' "$input" | jq -r '
+  IFS=$'\x1f' read -r ctx_pct wk_raw wk_reset se_raw se_reset model_name effort < <(printf '%s' "$input" | jq -r '
     [ (.context_window.used_percentage // 0 | floor | tostring),
       ((.rate_limits.seven_day.used_percentage // .rate_limits.seven_day.utilization // "none") | tostring),
       (.rate_limits.seven_day.resets_at // "" | tostring),
       ((.rate_limits.five_hour.used_percentage // .rate_limits.five_hour.utilization // "none") | tostring),
       (.rate_limits.five_hour.resets_at // "" | tostring),
-      (.model.display_name // .model.id // ""),
-      (.effort.level // "")
-    ] | @tsv' 2>/dev/null)
+      (.model.display_name // .model.id // "" | tostring),
+      (.effort.level // "" | tostring)
+    ] | join("\u001f")' 2>/dev/null)
 else
   ctx_pct=$(printf '%s' "$input" | grep -o '"used_percentage"[^,}]*' | grep -o '[0-9.]*' | head -1)
   wk_raw="none"; se_raw="none"; model_name=""; effort=""
